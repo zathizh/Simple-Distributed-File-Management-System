@@ -1,4 +1,5 @@
 import socket
+import optparse
 import tempfile
 from time import gmtime, strftime
 from threading import Thread
@@ -153,27 +154,33 @@ def conn(client, adr):
 	client.close()
 
 def main():
-	c_sock = socket.socket()
-	c_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)	
-	host = '127.0.0.1'
-	port = 52001
-	c_sock.bind((host, port))
-	c_sock.listen(5)
+        parser = optparse.OptionParser("usage %prog -c [control port]")
+        parser.add_option("-c", dest="cport", type="int", help="specify control port")
+        (options, args) = parser.parse_args()
+        c_port = options.cport
+        if c_port:
+                c_sock = socket.socket()
+                c_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)	
+                host = '127.0.0.1'
+                c_sock.bind((host, c_port))
+                c_sock.listen(5)
 	
-	print("[+] Starting Simple Distributed Management Server")
+                print("[+] Starting Simple Distributed Management Server")
 
-	try:	
-		while True:
-			try:
-				client, addr = c_sock.accept()
-				t = Thread(target=conn, args=(client,addr))
-				t.daemon = True
-				t.start()
-			except Exception as ex:
-				print(ex)
-	except KeyboardInterrupt:
-		print("")
-                print("[-] Exiting Simple Distributed Management Server")
+                try:	
+                        while True:
+                                try:
+                                        client, addr = c_sock.accept()
+                                        t = Thread(target=conn, args=(client,addr))
+                                        t.daemon = True
+                                        t.start()
+                                except Exception as ex:
+                                        print(ex)
+                except KeyboardInterrupt:
+                        print("")
+                        print("[-] Exiting Simple Distributed Management Server")
+        else:
+                print("usage %prog -c [control port]")
 
 if __name__ == '__main__':
 	main()

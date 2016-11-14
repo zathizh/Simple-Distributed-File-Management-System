@@ -1,6 +1,7 @@
-import socket
-import sys
 import os
+import sys
+import socket
+import optparse
 import subprocess
 from threading import Thread
 
@@ -117,22 +118,29 @@ def conn(c_sock, d_sock, d_port):
         
         
 def main():
-    try:
-        c_sock = socket.socket()
-	c_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        d_sock = socket.socket()
-	d_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        host = "127.0.0.1"
-        c_port = 52001
-        d_port = int(sys.argv[1])
-        c_sock.connect((host, c_port))
-        d_sock.bind((host, d_port))
-        d_sock.listen(5)
-        conn(c_sock, d_sock, d_port)
-    except KeyboardInterrupt:
-        print("[-] SFDM Client Quiting")
-    except Exception as ex:
-        print(ex)
+    parser = optparse.OptionParser("usage %prog -d [data port] -c [control port]")
+    parser.add_option("-d", dest="dport", type="int", help="specify data port")
+    parser.add_option("-c", dest="cport", type="int", help="specify control port")
+    (options, args) = parser.parse_args()
+    d_port = options.dport
+    c_port = options.cport
+    if d_port and c_port:
+        try:
+            c_sock = socket.socket()
+            c_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            d_sock = socket.socket()
+            d_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            host = "127.0.0.1"
+            c_sock.connect((host, c_port))
+            d_sock.bind((host, d_port))
+            d_sock.listen(5)
+            conn(c_sock, d_sock, d_port)
+        except KeyboardInterrupt:
+            print("[-] SFDM Client Quiting")
+        except Exception as ex:
+            print(ex)
+    else:
+        print("usage %prog -d [data port] -c [control port]")
 
 if __name__ == '__main__':
     main()
